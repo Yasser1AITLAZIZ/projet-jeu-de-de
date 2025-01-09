@@ -1,0 +1,524 @@
+Directory structure:
+└── src//
+    ├── index.html
+    ├── script.js
+    └── style.css
+
+================================================
+File: /index.html
+================================================
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jeu de Dé 3D</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- SECTION ACCUEIL -->
+  <section id="accueil">
+    <h1>Accueil - Session de Jeu</h1>
+    <p>Entrez votre pseudo pour rejoindre la session.</p>
+    
+    <div id="playerFormArea">
+      <input type="text" id="playerNameInput" placeholder="Votre pseudo" />
+      <button id="btnAddPlayer">Ajouter le joueur</button>
+    </div>
+
+    <h3>Joueurs enregistrés :</h3>
+    <ul id="playerList"></ul>
+
+    <button id="btnStartSession" disabled>Commencer la partie</button>
+  </section>
+
+  <!-- SECTION JEU DE DE (cachée au départ) -->
+  <section id="jeu" style="display: none;">
+    <h1>Jeu de Dé 3D</h1>
+
+    <div class="jeu-container">
+      
+      <!-- Sous-section GAUCHE : Lancers de dé + le dé 3D -->
+      <div class="left-part">
+        <h3>Lancers de dé</h3>
+        <p id="tourInfo">Joueur en train de lancer : --</p>
+
+        <div class="dice-wrapper">
+          <div class="dice-container">
+            <div class="cube" id="dice">
+              <!-- Face mapping: front=1, right=2, bottom=3, top=4, left=5, back=6 -->
+              <div class="face front">1</div>
+              <div class="face right">2</div>
+              <div class="face bottom">3</div>
+              <div class="face top">4</div>
+              <div class="face left">5</div>
+              <div class="face back">6</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nouveau bouton "Jouer" pour autoriser le début des lancers -->
+        <button id="btnStartRolling" style="margin-bottom: 20px;">
+          Jouer
+        </button>
+
+        <!-- Bouton pour lancer le dé (bloqué avant d'appuyer sur "Jouer") -->
+        <p id="resultat">Résultat du dé : --</p>
+        <button id="btnRoll" disabled>Lancer le dé (joueur suivant)</button>
+
+        <!-- Zone de notation (joueur désigné) -->
+        <div id="noteArea" style="display: none; margin-top: 20px;">
+          <p id="performancePrompt">Noter la performance de :</p>
+          <label for="noteInput">Note (1 à 10) :</label>
+          <input type="number" id="noteInput" min="1" max="10" />
+          <button id="btnSubmitNote">Valider la note</button>
+        </div>
+
+        <!-- Bouton pour terminer la session -->
+        <div class="end-session-area">
+          <button id="btnEndSession">Terminer la session</button>
+        </div>
+      </div>
+
+      <!-- Sous-section DROITE : Tableau des scores + Historique des tours -->
+      <div class="right-part">
+
+        <h3>Tableau des scores</h3>
+        <table id="scoreTable">
+          <thead>
+            <tr>
+              <th>Joueur</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="scoreTableBody">
+            <!-- Dynamique JS -->
+          </tbody>
+        </table>
+
+        <!-- Tableau récap des lancers -->
+        <h3 style="margin-top: 30px;">Historique des tours</h3>
+        <table id="roundHistoryTable">
+          <thead>
+            <tr>
+              <th>Tour</th>
+              <th>Résultats des joueurs</th>
+              <th>Joueur désigné</th>
+              <th>Note attribuée</th>
+            </tr>
+          </thead>
+          <tbody id="roundHistoryBody">
+            <!-- Dynamique JS -->
+          </tbody>
+        </table>
+
+      </div>
+    </div> <!-- fin .jeu-container -->
+  </section>
+
+  <!-- SECTION FINALE (cachée) -->
+  <section id="final" style="display: none;">
+    <h2>Fin de la session</h2>
+    <p id="winnerInfo"></p>
+
+    <h3>Scores finaux</h3>
+    <table id="finalScoreTable">
+      <thead>
+        <tr>
+          <th>Joueur</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="finalScoreTableBody">
+        <!-- Dynamique JS -->
+      </tbody>
+    </table>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+
+================================================
+File: /script.js
+================================================
+// ----- VARIABLES / ÉTAT -----
+let players = []; // { name, score }
+let currentRollerIndex = 0;
+let rollsForThisRound = [];
+let designatedPlayerIndex = null;
+
+// ----- ÉLÉMENTS DOM -----
+// Accueil
+const accueilSection = document.getElementById("accueil");
+const btnAddPlayer = document.getElementById("btnAddPlayer");
+const playerNameInput = document.getElementById("playerNameInput");
+const playerList = document.getElementById("playerList");
+const btnStartSession = document.getElementById("btnStartSession");
+
+// Jeu
+const jeuSection = document.getElementById("jeu");
+const dice = document.getElementById("dice");
+const btnRoll = document.getElementById("btnRoll");
+const resultatElem = document.getElementById("resultat");
+const tourInfoElem = document.getElementById("tourInfo");
+
+const noteArea = document.getElementById("noteArea");
+const performancePrompt = document.getElementById("performancePrompt");
+const noteInput = document.getElementById("noteInput");
+const btnSubmitNote = document.getElementById("btnSubmitNote");
+const scoreTableBody = document.getElementById("scoreTableBody");
+const btnEndSession = document.getElementById("btnEndSession");
+
+// Finale
+const finalSection = document.getElementById("final");
+const winnerInfoElem = document.getElementById("winnerInfo");
+const finalScoreTableBody = document.getElementById("finalScoreTableBody");
+
+// ----- FONCTIONS -----
+
+function refreshPlayerList() {
+  playerList.innerHTML = "";
+  players.forEach((p) => {
+    const li = document.createElement("li");
+    li.textContent = `${p.name} (score: ${p.score})`;
+    playerList.appendChild(li);
+  });
+}
+
+function refreshScoreTable() {
+  scoreTableBody.innerHTML = "";
+  players.forEach((p) => {
+    const tr = document.createElement("tr");
+    const tdName = document.createElement("td");
+    const tdScore = document.createElement("td");
+    tdName.textContent = p.name;
+    tdScore.textContent = p.score;
+    tr.appendChild(tdName);
+    tr.appendChild(tdScore);
+    scoreTableBody.appendChild(tr);
+  });
+}
+
+function updateTourInfo() {
+  if (currentRollerIndex < players.length) {
+    tourInfoElem.textContent = `Joueur en train de lancer : ${players[currentRollerIndex].name}`;
+  } else {
+    tourInfoElem.textContent = "Tous les joueurs ont lancé ce tour.";
+  }
+}
+
+function rollDiceValue() {
+  return Math.floor(Math.random() * 6) + 1;
+}
+
+/**
+ * On applique une rotation correspondant à la face:
+ * 1 => front => rotateX(0) rotateY(0)
+ * 2 => right => rotateY(-90)
+ * 3 => bottom => rotateX(90)
+ * 4 => top => rotateX(-90)
+ * 5 => left => rotateY(90)
+ * 6 => back => rotateY(180)
+ */
+function rotateDiceToValue(value) {
+  let rotateX = 0, rotateY = 0;
+  switch (value) {
+    case 1: rotateX = 0; rotateY = 0; break;
+    case 2: rotateX = 0; rotateY = -90; break;
+    case 3: rotateX = 90; rotateY = 0; break;
+    case 4: rotateX = -90; rotateY = 0; break;
+    case 5: rotateX = 0; rotateY = 90; break;
+    case 6: rotateX = 0; rotateY = 180; break;
+  }
+  dice.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+}
+
+// Trouver la plus petite valeur dans rollsForThisRound
+function findMinRollPlayerIndex() {
+  let minVal = Infinity;
+  let minPlayerIndex = null;
+  rollsForThisRound.forEach(r => {
+    if (r.value < minVal) {
+      minVal = r.value;
+      minPlayerIndex = r.playerIndex;
+    }
+  });
+  return minPlayerIndex;
+}
+
+// ----- ÉCOUTEURS D'ÉVÉNEMENTS -----
+
+// (1) Ajouter un joueur
+btnAddPlayer.addEventListener("click", () => {
+  const name = playerNameInput.value.trim();
+  if (name) {
+    players.push({ name, score: 0 });
+    playerNameInput.value = "";
+    refreshPlayerList();
+    if (players.length > 0) {
+      btnStartSession.disabled = false;
+    }
+  }
+});
+
+// (2) Commencer la session
+btnStartSession.addEventListener("click", () => {
+  accueilSection.style.display = "none";
+  jeuSection.style.display = "block";
+  currentRollerIndex = 0;
+  rollsForThisRound = [];
+  refreshScoreTable();
+  updateTourInfo();
+});
+
+// (3) Lancer le dé (joueur suivant)
+btnRoll.addEventListener("click", () => {
+  if (currentRollerIndex >= players.length) {
+    alert("Tous les joueurs ont déjà lancé ce tour. Veuillez noter la performance, ou démarrer un nouveau tour.");
+    return;
+  }
+  const value = rollDiceValue();
+  resultatElem.textContent = `Résultat du dé : ${value}`;
+  rotateDiceToValue(value);
+
+  rollsForThisRound.push({ playerIndex: currentRollerIndex, value });
+  currentRollerIndex++;
+  if (currentRollerIndex < players.length) {
+    updateTourInfo();
+  } else {
+    updateTourInfo();
+    alert("Tous les joueurs ont lancé. Le plus petit résultat sera désigné !");
+    designatedPlayerIndex = findMinRollPlayerIndex();
+    noteArea.style.display = "block";
+    performancePrompt.textContent = `Noter la performance de ${players[designatedPlayerIndex].name} :`;
+  }
+});
+
+// (4) Valider la note
+btnSubmitNote.addEventListener("click", () => {
+  const noteValue = parseInt(noteInput.value, 10);
+  if (!isNaN(noteValue) && noteValue >= 1 && noteValue <= 10) {
+    players[designatedPlayerIndex].score += noteValue;
+    noteInput.value = "";
+    noteArea.style.display = "none";
+    refreshScoreTable();
+
+    // Prépare un nouveau tour
+    rollsForThisRound = [];
+    currentRollerIndex = 0;
+    designatedPlayerIndex = null;
+    resultatElem.textContent = "Résultat du dé : --";
+    rotateDiceToValue(1); // réinitialise visuellement (optionnel)
+    updateTourInfo();
+    alert("Nouveau tour : on repart avec le premier joueur !");
+  } else {
+    alert("Veuillez saisir une note entre 1 et 10.");
+  }
+});
+
+// (5) Terminer la session
+btnEndSession.addEventListener("click", () => {
+  jeuSection.style.display = "none";
+  finalSection.style.display = "block";
+
+  // Trouver le gagnant
+  let winner = null;
+  let maxScore = -Infinity;
+  players.forEach(p => {
+    if (p.score > maxScore) {
+      maxScore = p.score;
+      winner = p;
+    }
+  });
+  winnerInfoElem.textContent = `Le gagnant est ${winner.name} avec ${winner.score} points !`;
+
+  // Afficher le tableau final (trié par score décroissant)
+  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  finalScoreTableBody.innerHTML = "";
+  sortedPlayers.forEach(p => {
+    const tr = document.createElement("tr");
+    const tdName = document.createElement("td");
+    const tdScore = document.createElement("td");
+    tdName.textContent = p.name;
+    tdScore.textContent = p.score;
+    tr.appendChild(tdName);
+    tr.appendChild(tdScore);
+    finalScoreTableBody.appendChild(tr);
+  });
+});
+
+
+================================================
+File: /style.css
+================================================
+/* Réinitialisations et styles de base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background: #f4f4f4;
+    color: #333;
+    text-align: center;
+    padding: 20px;
+  }
+  section {
+    background: #fff;
+    margin-bottom: 40px;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  h1, h2, h3 {
+    margin-bottom: 20px;
+  }
+  
+  /* Accueil */
+  #accueil {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  #playerFormArea {
+    margin: 10px 0;
+  }
+  #playerNameInput {
+    padding: 5px;
+    width: 200px;
+    margin-right: 10px;
+  }
+  #playerList {
+    list-style: none;
+    margin: 10px 0;
+    padding: 0;
+  }
+  #playerList li {
+    margin: 5px 0;
+  }
+  
+  /* Boutons */
+  button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background: #fafafa;
+  }
+  button:hover {
+    background: #eee;
+  }
+  
+  /* Conteneur section jeu */
+  .jeu-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .left-part, .right-part {
+    background: #fafafa;
+    border-radius: 8px;
+    margin-right: 20px;
+    padding: 15px;
+    flex: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .right-part {
+    flex: 0.7;
+  }
+  
+  /* Dé 3D */
+  .dice-wrapper {
+    margin: 0 auto 20px auto;
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+  .dice-container {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    perspective: 600px; 
+  }
+  .cube {
+    width: 100px;
+    height: 100px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 1s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    border-radius: 8px;
+  }
+  .face {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #fff, #f2f2f2);
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .front {
+    transform: rotateY(0deg) translateZ(50px);
+  }
+  .right {
+    transform: rotateY(90deg) translateZ(50px);
+  }
+  .bottom {
+    transform: rotateX(-90deg) translateZ(50px);
+  }
+  .top {
+    transform: rotateX(90deg) translateZ(50px);
+  }
+  .left {
+    transform: rotateY(-90deg) translateZ(50px);
+  }
+  .back {
+    transform: rotateY(180deg) translateZ(50px);
+  }
+  
+  /* Tableaux */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: #fff;
+  }
+  table th, table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  /* Historique des tours */
+  #roundHistoryTable {
+    margin-top: 10px;
+  }
+  
+  /* Finale */
+  #final {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* Divers */
+  .end-session-area {
+    margin-top: 20px;
+  }
+  #resultat {
+    margin: 10px 0;
+  }
+  #tourInfo {
+    margin-bottom: 20px; /* Ajustez la valeur selon vos besoins */
+  }
+  
+
