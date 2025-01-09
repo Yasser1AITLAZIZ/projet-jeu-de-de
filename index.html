@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jeu de Dé 3D</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- SECTION ACCUEIL -->
+  <section id="accueil">
+    <h1>Accueil - Session de Jeu</h1>
+    <p>Entrez votre pseudo pour rejoindre la session.</p>
+    
+    <div id="playerFormArea">
+      <input type="text" id="playerNameInput" placeholder="Votre pseudo" />
+      <button id="btnAddPlayer">Ajouter le joueur</button>
+    </div>
+
+    <h3>Joueurs enregistrés :</h3>
+    <ul id="playerList"></ul>
+
+    <button id="btnStartSession" disabled>Commencer la partie</button>
+  </section>
+
+  <!-- SECTION JEU DE DE (cachée au départ) -->
+  <section id="jeu" style="display: none;">
+    <h1>Jeu de Dé 3D</h1>
+
+    <div class="jeu-container">
+      
+      <!-- Sous-section GAUCHE : Lancers de dé + le dé 3D -->
+      <div class="left-part">
+        <h3>Lancers de dé</h3>
+        <p id="tourInfo">Joueur en train de lancer : --</p>
+
+        <div class="dice-wrapper">
+          <div class="dice-container">
+            <div class="cube" id="dice">
+              <!-- Face mapping: front=1, right=2, bottom=3, top=4, left=5, back=6 -->
+              <div class="face front">1</div>
+              <div class="face right">2</div>
+              <div class="face bottom">3</div>
+              <div class="face top">4</div>
+              <div class="face left">5</div>
+              <div class="face back">6</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nouveau bouton "Jouer" pour autoriser le début des lancers -->
+        <button id="btnStartRolling" style="margin-bottom: 20px;">
+          Jouer
+        </button>
+
+        <!-- Bouton pour lancer le dé (bloqué avant d'appuyer sur "Jouer") -->
+        <p id="resultat">Résultat du dé : --</p>
+        <button id="btnRoll" disabled>Lancer le dé (joueur suivant)</button>
+
+        <!-- Zone de notation (joueur désigné) -->
+        <div id="noteArea" style="display: none; margin-top: 20px;">
+          <p id="performancePrompt">Noter la performance de :</p>
+          <label for="noteInput">Note (1 à 10) :</label>
+          <input type="number" id="noteInput" min="1" max="10" />
+          <button id="btnSubmitNote">Valider la note</button>
+        </div>
+
+        <!-- Bouton pour terminer la session -->
+        <div class="end-session-area">
+          <button id="btnEndSession">Terminer la session</button>
+        </div>
+      </div>
+
+      <!-- Sous-section DROITE : Tableau des scores + Historique des tours -->
+      <div class="right-part">
+
+        <h3>Tableau des scores</h3>
+        <table id="scoreTable">
+          <thead>
+            <tr>
+              <th>Joueur</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="scoreTableBody">
+            <!-- Dynamique JS -->
+          </tbody>
+        </table>
+
+        <!-- Tableau récap des lancers -->
+        <h3 style="margin-top: 30px;">Historique des tours</h3>
+        <table id="roundHistoryTable">
+          <thead>
+            <tr>
+              <th>Tour</th>
+              <th>Résultats des joueurs</th>
+              <th>Joueur désigné</th>
+              <th>Note attribuée</th>
+            </tr>
+          </thead>
+          <tbody id="roundHistoryBody">
+            <!-- Dynamique JS -->
+          </tbody>
+        </table>
+
+      </div>
+    </div> <!-- fin .jeu-container -->
+  </section>
+
+  <!-- SECTION FINALE (cachée) -->
+  <section id="final" style="display: none;">
+    <h2>Fin de la session</h2>
+    <p id="winnerInfo"></p>
+
+    <h3>Scores finaux</h3>
+    <table id="finalScoreTable">
+      <thead>
+        <tr>
+          <th>Joueur</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody id="finalScoreTableBody">
+        <!-- Dynamique JS -->
+      </tbody>
+    </table>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
