@@ -36,13 +36,13 @@
         <p id="tourInfo">Joueur en train de lancer : --</p>
 
         <div class="dice-wrapper">
-
-          <!-- ICI : Un conteneur pour afficher “?” par défaut -->
+          <!-- “?” par défaut -->
           <div id="dicePlaceholder">?</div>
 
+          <!-- Conteneur 3D -->
           <div class="dice-container">
             <div class="cube" id="dice">
-              <!-- Face mapping: front=1, right=2, bottom=3, top=4, left=5, back=6 -->
+              <!-- Face mapping (front=1, right=2, etc.) -->
               <div class="face front">1</div>
               <div class="face right">2</div>
               <div class="face bottom">3</div>
@@ -51,17 +51,16 @@
               <div class="face back">6</div>
             </div>
           </div>
-
         </div>
 
-        <!-- Nouveau bouton "Jouer" pour autoriser le début des lancers -->
+        <!-- Bouton "Jouer" (pour autoriser le début des lancers) -->
         <button id="btnStartRolling" style="margin-bottom: 20px;">
           Jouer
         </button>
 
-        <!-- Bouton pour lancer le dé (bloqué avant d'appuyer sur "Jouer") -->
-        <p id="resultat">Résultat du dé : --</p>
-        <button id="btnRoll" disabled>Lancer le dé (joueur suivant)</button>
+        <!-- Affichage du résultat + bouton "Lancer le dé" (cachés au départ) -->
+        <p id="resultat" style="display: none;">Résultat du dé : --</p>
+        <button id="btnRoll" style="display: none;" disabled>Lancer le dé (joueur suivant)</button>
 
         <!-- Zone de notation (joueur désigné) -->
         <div id="noteArea" style="display: none; margin-top: 20px;">
@@ -79,7 +78,6 @@
 
       <!-- Sous-section DROITE : Tableau des scores + Historique des tours -->
       <div class="right-part">
-
         <h3>Tableau des scores</h3>
         <table id="scoreTable">
           <thead>
@@ -93,7 +91,6 @@
           </tbody>
         </table>
 
-        <!-- Tableau récap des lancers -->
         <h3 style="margin-top: 30px;">Historique des tours</h3>
         <table id="roundHistoryTable">
           <thead>
@@ -108,7 +105,6 @@
             <!-- Dynamique JS -->
           </tbody>
         </table>
-
       </div>
     </div> <!-- fin .jeu-container -->
   </section>

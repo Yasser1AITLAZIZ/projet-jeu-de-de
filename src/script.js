@@ -157,6 +157,7 @@ function addRoundToHistory(designatedIndex, note) {
 }
 
 // ----- ÉCOUTEURS D'ÉVÉNEMENTS -----
+
 // (1) Ajouter un joueur
 btnAddPlayer.addEventListener("click", () => {
   const name = playerNameInput.value.trim();
@@ -183,14 +184,19 @@ btnStartSession.addEventListener("click", () => {
 // (2-bis) Cliquer sur "Jouer" => Active la possibilité de lancer le dé
 btnStartRolling.addEventListener("click", () => {
   isRollingEnabled = true;
+
+  // On affiche la zone "Résultat du dé" et le bouton "Lancer le dé",
+  // et on cache le bouton "Jouer".
+  resultatElem.style.display = "block";
+  btnRoll.style.display = "inline-block";
   btnRoll.disabled = false;
-  // On masque le dé 3D et remet le placeholder "?"
-  // (au cas où on vienne d'un tour précédent)
+  btnStartRolling.style.display = "none";
+
+  // On remet le placeholder "?"
   dicePlaceholder.style.display = "block";
   document.querySelector(".dice-container").style.display = "none";
 
   updateTourInfo();
-  alert("Vous pouvez maintenant lancer le dé !");
 });
 
 // (3) Lancer le dé (joueur suivant)
@@ -208,21 +214,33 @@ btnRoll.addEventListener("click", () => {
   dicePlaceholder.style.display = "none";
   document.querySelector(".dice-container").style.display = "block";
 
+  // 1) On génère la valeur
   const value = rollDiceValue();
-  resultatElem.textContent = `Résultat du dé : ${value}`;
+  // 2) On lance la rotation immédiatement
   rotateDiceToValue(value);
 
-  rollsForThisRound.push({ playerIndex: currentRollerIndex, value });
-  currentRollerIndex++;
-  if (currentRollerIndex < players.length) {
-    updateTourInfo();
-  } else {
-    updateTourInfo();
-    alert("Tous les joueurs ont lancé. Le plus petit résultat sera désigné !");
-    designatedPlayerIndex = findMinRollPlayerIndex();
-    noteArea.style.display = "block";
-    performancePrompt.textContent = `Noter la performance de ${players[designatedPlayerIndex].name} :`;
-  }
+  // 3) On attend un peu (ex : 1 seconde) pour que l'animation soit visible,
+  // puis on affiche le résultat
+  setTimeout(() => {
+    resultatElem.textContent = `Résultat du dé : ${value}`;
+
+    // On enregistre le lancer
+    rollsForThisRound.push({ playerIndex: currentRollerIndex, value });
+    currentRollerIndex++;
+
+    if (currentRollerIndex < players.length) {
+      updateTourInfo();
+    } else {
+      updateTourInfo();
+      // Tous les joueurs ont lancé : après 1s, on passe à la phase de désignation
+      setTimeout(() => {
+        alert("Tous les joueurs ont lancé. Le plus petit résultat sera désigné !");
+        designatedPlayerIndex = findMinRollPlayerIndex();
+        noteArea.style.display = "block";
+        performancePrompt.textContent = `Noter la performance de ${players[designatedPlayerIndex].name} :`;
+      }, 1000);
+    }
+  }, 1000); // On attend 1 seconde d'animation avant d'afficher le résultat
 });
 
 // (4) Valider la note
